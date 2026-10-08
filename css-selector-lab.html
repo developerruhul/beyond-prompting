@@ -1,0 +1,1089 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Selector Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: selector library rail on the left; workbench on the right: selector bar, then DOM tree | rendered page, then inspector | code */
+:root{
+  --bg:#060a13; --surface:#0b1220; --surface-2:#111a2d; --line:#1d2a44; --ink:#e7eef9; --muted:#8a9bb8;
+  --accent:#38bdf8; --accent-ink:#03131f; --grid:rgba(56,189,248,.07); --tint:rgba(56,189,248,.12);
+  --k-type:#c4a5ff; --k-class:#fbbf24; --k-id:#fb7185; --k-attr:#2dd4bf; --k-pseudo:#4ade80; --k-comb:#e7eef9;
+  --sel:#f472b6; --sel-tint:rgba(244,114,182,.14); --hl:#0ea5e9; --err:#fb7185;
+  --f-display:"Archivo Black","Arial Black",system-ui,sans-serif;
+  --f-body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f2f5fa; --surface:#ffffff; --surface-2:#eef2f8; --line:#d6deea; --ink:#0b1220; --muted:#536179;
+    --accent:#0284c7; --accent-ink:#ffffff; --grid:rgba(2,132,199,.08); --tint:rgba(2,132,199,.10);
+    --k-type:#7e22ce; --k-class:#b45309; --k-id:#be123c; --k-attr:#0f766e; --k-pseudo:#15803d; --k-comb:#0b1220;
+    --sel:#db2777; --sel-tint:rgba(219,39,119,.10); --hl:#0284c7; --err:#be123c;
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#f2f5fa; --surface:#ffffff; --surface-2:#eef2f8; --line:#d6deea; --ink:#0b1220; --muted:#536179;
+  --accent:#0284c7; --accent-ink:#ffffff; --grid:rgba(2,132,199,.08); --tint:rgba(2,132,199,.10);
+  --k-type:#7e22ce; --k-class:#b45309; --k-id:#be123c; --k-attr:#0f766e; --k-pseudo:#15803d; --k-comb:#0b1220;
+  --sel:#db2777; --sel-tint:rgba(219,39,119,.10); --hl:#0284c7; --err:#be123c;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#060a13; --surface:#0b1220; --surface-2:#111a2d; --line:#1d2a44; --ink:#e7eef9; --muted:#8a9bb8;
+  --accent:#38bdf8; --accent-ink:#03131f; --grid:rgba(56,189,248,.07); --tint:rgba(56,189,248,.12);
+  --k-type:#c4a5ff; --k-class:#fbbf24; --k-id:#fb7185; --k-attr:#2dd4bf; --k-pseudo:#4ade80; --k-comb:#e7eef9;
+  --sel:#f472b6; --sel-tint:rgba(244,114,182,.14); --hl:#0ea5e9; --err:#fb7185;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--f-body);margin:0}
+.shell{padding-inline:16px;padding-block:0 32px;max-width:1500px;margin:0 auto}
+code,kbd,textarea{font-family:var(--f-mono)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.eyebrow{font:600 11px/1.2 var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0}
+.muted{color:var(--muted)}
+.k-type{color:var(--k-type)} .k-class{color:var(--k-class)} .k-id{color:var(--k-id)}
+.k-attr{color:var(--k-attr)} .k-pseudo{color:var(--k-pseudo)} .k-comb{color:var(--k-comb)}
+b[class^="k-"]{font-weight:600;font-family:var(--f-mono);font-size:.94em}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 32px;padding-block:22px 18px;margin-bottom:16px;border-bottom:1px solid var(--line);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{display:grid;place-items:center;width:44px;height:44px;border:1.5px solid var(--accent);border-radius:8px;color:var(--accent);font:600 17px var(--f-mono)}
+.top h1{font:400 26px/1.1 var(--f-display);margin:4px 0 0;letter-spacing:.01em}
+.top h1 span{color:var(--accent)}
+.tag{margin:0;color:var(--muted);max-width:52ch;text-wrap:balance}
+
+.app{display:grid;grid-template-columns:290px minmax(0,1fr);gap:16px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;min-width:0}
+.pane-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.hint{font-size:12px;color:var(--muted)}
+
+/* library */
+.lib{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding:4px 0 10px}
+.fam{padding:12px 12px 4px}
+.fam h2{font:400 15px/1.2 var(--f-display);margin:0 0 2px;letter-spacing:.01em}
+.fam > p{margin:0 0 8px;font-size:12px;color:var(--muted)}
+.items{display:grid;gap:4px}
+.item{display:grid;gap:2px;text-align:left;background:transparent;border:1px solid transparent;border-radius:7px;padding:6px 8px;cursor:pointer}
+.item:hover{background:var(--surface-2)}
+.item.on{background:var(--tint);border-color:var(--accent)}
+.item code{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item span{font-size:12px;color:var(--muted);line-height:1.35}
+.item .trap{display:inline-block;font:600 9px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--err);border:1px solid currentColor;border-radius:3px;padding:2px 4px;margin-right:5px;vertical-align:1px}
+.links{border-top:1px solid var(--line);margin:10px 12px 0;padding-top:10px;display:grid;gap:4px;font-size:12px}
+.links a{color:var(--accent);text-decoration:none}
+.links a:hover{text-decoration:underline}
+
+/* selector bar */
+.work{display:grid;gap:16px;min-width:0}
+.bar{padding:14px 16px 16px;display:grid;gap:12px}
+.inputrow{display:flex;gap:10px;align-items:stretch}
+#sel{flex:1;min-width:0;font:600 22px/1.2 var(--f-mono);padding:12px 14px;background:var(--surface-2);color:var(--ink);border:1px solid var(--line);border-radius:8px}
+#sel:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--tint)}
+.count{display:grid;place-items:center;min-width:110px;padding:0 12px;border-radius:8px;font:600 13px var(--f-mono);background:var(--accent);color:var(--accent-ink);font-variant-numeric:tabular-nums;text-align:center}
+.count.zero{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.count.bad{background:transparent;color:var(--err);border:1px solid var(--err)}
+.anatomy{display:flex;flex-wrap:wrap;align-items:flex-start;gap:8px;min-height:20px}
+.cmp{display:grid;gap:4px;justify-items:center;padding:6px 8px 4px;border:1px dashed var(--line);border-radius:8px}
+.cmp.is-target{border-style:solid;border-color:var(--accent);background:var(--tint)}
+.chips{display:flex;gap:3px}
+.chip,.comb{display:grid;justify-items:center;gap:2px}
+.chip code{font-size:15px;font-weight:600;padding:2px 6px;border-radius:5px;border:1px solid currentColor;background:var(--surface)}
+.chip small,.comb small,.role{font:500 10px/1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.role{color:var(--ink)}
+.cmp.is-target .role{color:var(--accent)}
+.comb{align-self:center;padding:0 2px}
+.comb code{font-size:16px;font-weight:600;color:var(--k-comb);background:var(--surface-2);border-radius:5px;padding:2px 7px}
+.or{align-self:center;font:600 11px var(--f-mono);color:var(--muted);padding:0 4px}
+.english{margin:0;font-size:16px;line-height:1.55;max-width:80ch}
+.english .err{color:var(--err)}
+.meta{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-start}
+.specs{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.spec{display:flex;gap:2px;align-items:stretch}
+.spec .lab{align-self:center;font:12px var(--f-mono);margin-right:6px;max-width:16ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sp{display:grid;justify-items:center;min-width:52px;padding:4px 6px;background:var(--surface-2);border-radius:5px}
+.sp b{font:600 16px var(--f-mono);font-variant-numeric:tabular-nums}
+.sp small{font:10px var(--f-mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.sp.k-id b{color:var(--k-id)} .sp.k-class b{color:var(--k-class)} .sp.k-type b{color:var(--k-type)}
+.notes{flex:1;min-width:240px;display:grid;gap:6px;font-size:13px}
+.notes span{display:block;padding:7px 10px;border-left:2px solid var(--k-class);background:var(--surface-2);border-radius:0 6px 6px 0}
+
+/* panes */
+.panes{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:16px}
+.tree{height:460px;overflow:auto;padding:10px 8px 14px;font:12.5px/1.75 var(--f-mono)}
+.node .kids{margin-left:9px;padding-left:8px;border-left:1px solid var(--line)}
+.row{display:flex;align-items:center;gap:4px;border-radius:5px;padding:0 6px 0 2px;cursor:pointer;white-space:nowrap;position:relative}
+.row:hover,.row.is-hov{background:var(--surface-2)}
+.row.textrow,.row.close{cursor:default}
+.row.textrow:hover,.row.close:hover{background:transparent}
+.row.is-match{background:var(--tint);box-shadow:inset 3px 0 0 var(--accent)}
+.row.is-sel{outline:1.5px solid var(--sel);outline-offset:-1px;background:var(--sel-tint)}
+.tw{width:16px;height:16px;flex:none;display:grid;place-items:center;border:0;background:transparent;color:var(--muted);cursor:pointer;padding:0;font-size:10px;border-radius:3px}
+.tw:hover{color:var(--ink)}
+.tw.sp0{cursor:default}
+.node.collapsed > .row .tw{transform:rotate(-90deg)}
+.node.collapsed > .kids,.node.collapsed > .close{display:none}
+.ell{display:none;color:var(--muted)}
+.node.collapsed > .row .ell{display:inline}
+.p{color:var(--muted)} .an{color:var(--k-attr)} .av{color:var(--muted)} .txt{color:var(--muted)}
+.close .code{color:var(--muted)}
+.badge{margin-left:6px;font:600 10px/1 var(--f-mono);padding:3px 5px;border-radius:4px;background:var(--accent);color:var(--accent-ink)}
+.preview-wrap{position:relative;height:460px;overflow:auto;background:#ffffff;border-radius:0 0 10px 10px}
+#host{display:block;min-height:100%}
+.overlay{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none}
+.ov{position:absolute;border-radius:3px}
+.ov.m{outline:2px solid var(--hl);background:rgba(14,165,233,.13)}
+.ov.m i{position:absolute;left:-2px;top:-17px;font:600 10px/1 var(--f-mono);font-style:normal;background:var(--hl);color:#ffffff;padding:3px 5px;border-radius:3px 3px 3px 0}
+.ov.s{outline:2px solid var(--sel);outline-offset:2px}
+.ov.h{outline:1.5px dashed #0f172a;background:rgba(15,23,42,.06)}
+
+/* inspector + editor */
+.lower{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;align-items:start}
+.insp-body{padding:14px;display:grid;gap:16px}
+.empty{padding:16px 14px;margin:0;color:var(--muted)}
+.family{display:flex;flex-wrap:wrap;align-items:flex-end;gap:4px 2px}
+.crumb{display:grid;gap:2px;justify-items:start;background:transparent;border:1px solid transparent;border-radius:6px;padding:3px 6px;cursor:pointer;font:12.5px var(--f-mono)}
+.crumb:hover{background:var(--surface-2)}
+.crumb small{font:10px var(--f-mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.crumb.cur{border-color:var(--sel);background:var(--sel-tint)}
+.crumb.cur small{color:var(--sel)}
+.sep{color:var(--muted);padding-bottom:5px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:0}
+.facts div{background:var(--surface-2);border-radius:7px;padding:8px 10px;min-width:0}
+.facts dt{font:10px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.facts dd{margin:2px 0 0;font:600 13px var(--f-mono);overflow-wrap:anywhere}
+.insp-grid{display:grid;grid-template-columns:minmax(0,240px) minmax(0,1fr);gap:16px;align-items:start}
+.boxwrap{display:grid;gap:6px}
+.bm{display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto 1fr auto;position:relative;padding:3px 4px;border:1px dashed rgba(15,23,42,.45);text-align:center;font:11px/1.4 var(--f-mono);color:#1f2937;border-radius:2px}
+.bm.m{background:#f9cc9d}.bm.b{background:#fde68a;border-style:solid;border-color:#1f2937}.bm.pd{background:#c3d08b}
+.bm-l{position:absolute;left:5px;top:3px;font-size:9.5px;text-transform:uppercase;letter-spacing:.05em}
+.bt{grid-column:2;grid-row:1;padding-top:12px}.bb{grid-column:2;grid-row:3}
+.bl{grid-column:1;grid-row:2;align-self:center;padding:0 5px}.br{grid-column:3;grid-row:2;align-self:center;padding:0 5px}
+.bc{grid-column:2;grid-row:2}
+.bm-content{background:#8cb6c0;padding:10px 6px;border:1px dashed rgba(15,23,42,.45);font-weight:600;font-variant-numeric:tabular-nums}
+.boxwrap p{margin:0;font:12px var(--f-mono);color:var(--muted)}
+.rsec{display:grid;gap:6px}
+.rsec + .rsec{margin-top:12px}
+.rsec-h{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.rsec-h b{text-transform:none;letter-spacing:0}
+.rule{border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.rule-h{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 10px;background:var(--surface-2);font:12.5px var(--f-mono)}
+.rule-h .from{color:var(--muted);font-size:11px}
+.spb{font:600 11px var(--f-mono);color:var(--muted);white-space:nowrap}
+.rule ul{list-style:none;margin:0;padding:6px 10px;font:12.5px/1.7 var(--f-mono)}
+.rule li{display:flex;flex-wrap:wrap;gap:0 6px;align-items:baseline}
+.rule li .pp{color:var(--k-attr)}
+.rule li.lost .pp,.rule li.lost .pv{text-decoration:line-through;opacity:.5}
+.inh{font:600 9px/1 var(--f-mono);text-transform:uppercase;letter-spacing:.08em;color:var(--k-pseudo);border:1px solid currentColor;border-radius:3px;padding:2px 4px}
+.stay{margin:0;font-size:12.5px;line-height:1.6;padding:8px 10px;border:1px dashed var(--line);border-radius:7px}
+.stay code{color:var(--k-attr);font-size:12px}
+.small{font-size:12.5px;margin:0}
+
+.tabs{display:flex;gap:4px}
+.tabs button{background:transparent;border:1px solid transparent;border-radius:6px;padding:4px 10px;font:600 12px var(--f-mono);color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--surface-2);border-color:var(--line);color:var(--ink)}
+.ghost{background:transparent;border:1px solid var(--line);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--muted)}
+.ghost:hover{color:var(--ink);border-color:var(--muted)}
+#code{display:block;width:100%;height:420px;resize:vertical;border:0;background:var(--surface);color:var(--ink);padding:12px 14px;font-size:12.5px;line-height:1.6;tab-size:2;white-space:pre;overflow:auto}
+#code:focus{outline:none;box-shadow:inset 0 0 0 2px var(--tint)}
+.editor .hint{display:block;padding:8px 14px;border-top:1px solid var(--line);margin:0}
+
+@media (max-width:1150px){
+  .app{grid-template-columns:1fr}
+  .lib{position:static;max-height:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .links{grid-column:1/-1}
+}
+@media (max-width:820px){
+  .panes,.lower{grid-template-columns:1fr}
+  .insp-grid{grid-template-columns:1fr}
+  .tree,.preview-wrap{height:360px}
+  #sel{font-size:18px}
+  .count{min-width:84px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="shell">
+  <header class="top">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">&gt;_</span>
+      <div>
+        <p class="eyebrow">Beyond Prompting · Phase 0 · CSS</p>
+        <h1>Selector <span>Lab</span></h1>
+      </div>
+    </div>
+    <p class="tag">Type a selector and see which elements it picks, what it means in plain English, and how each element ends up with its styles.</p>
+  </header>
+
+  <div class="app">
+    <aside class="panel lib" id="lib" aria-label="Selector library"></aside>
+
+    <main class="work">
+      <section class="panel bar" aria-label="Selector">
+        <label for="sel" class="eyebrow">Selector</label>
+        <div class="inputrow">
+          <input id="sel" type="text" value=".card > img" autocomplete="off" autocapitalize="off" spellcheck="false">
+          <span id="count" class="count" aria-live="polite"></span>
+        </div>
+        <div id="anatomy" class="anatomy"></div>
+        <p id="english" class="english"></p>
+        <div class="meta">
+          <div>
+            <p class="eyebrow">Specificity</p>
+            <div id="specs" class="specs"></div>
+          </div>
+          <div id="notes" class="notes"></div>
+        </div>
+      </section>
+
+      <div class="panes">
+        <section class="panel" aria-label="DOM tree">
+          <div class="pane-h"><span class="eyebrow">DOM tree</span><span class="hint">Click a tag to inspect it</span></div>
+          <div id="tree" class="tree"></div>
+        </section>
+        <section class="panel" aria-label="Rendered page">
+          <div class="pane-h"><span class="eyebrow">Rendered page</span><span class="hint">Matches are outlined and numbered</span></div>
+          <div id="wrap" class="preview-wrap"><div id="host"></div><div id="overlay" class="overlay"></div></div>
+        </section>
+      </div>
+
+      <div class="lower">
+        <section class="panel" id="inspector" aria-label="Inspector"></section>
+        <section class="panel editor" aria-label="Code">
+          <div class="pane-h">
+            <div class="tabs" role="tablist">
+              <button role="tab" id="tab-html" aria-selected="true" data-tab="html">HTML</button>
+              <button role="tab" id="tab-css" aria-selected="false" data-tab="css">CSS</button>
+            </div>
+            <button id="reset" class="ghost" type="button">Reset sample</button>
+          </div>
+          <textarea id="code" spellcheck="false" autocomplete="off" aria-label="Code editor"></textarea>
+          <span class="hint">The tree and the page update as you type. The page is sandboxed, so there is no &lt;html&gt; or &lt;body&gt; to select.</span>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+(() => {
+/* ---------- sample page ---------- */
+const SAMPLE_HTML = `<header class="site-header">
+  <h1 id="logo">Folio</h1>
+  <nav>
+    <a href="/" class="active">Home</a>
+    <a href="/work">Work</a>
+    <a href="https://github.com">GitHub</a>
+  </nav>
+</header>
+
+<main>
+  <section class="gallery">
+    <h2>Recent work</h2>
+    <div class="card featured">
+      <img src="dashboard.svg" alt="Dashboard">
+      <p class="caption">Analytics dashboard</p>
+    </div>
+    <div class="card">
+      <img src="landing.svg" alt="Landing page">
+      <p class="caption">Landing page</p>
+    </div>
+    <div class="card">
+      <img src="mobile.svg" alt="Mobile app">
+      <p class="caption">Mobile app</p>
+    </div>
+  </section>
+
+  <form class="signup">
+    <label for="email">Email</label>
+    <input type="email" id="email" placeholder="you@example.com" required>
+    <button type="submit">Subscribe</button>
+  </form>
+</main>
+
+<footer>
+  <p>Built while learning CSS.</p>
+</footer>`;
+
+const SAMPLE_CSS = `header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+#logo {
+  font-size: 20px;
+  margin: 0;
+}
+
+nav a {
+  color: #475569;
+  text-decoration: none;
+  margin-left: 14px;
+}
+
+nav a.active {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+main {
+  padding: 20px;
+}
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  color: #334155;
+}
+
+.gallery h2 {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 16px;
+}
+
+.card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px;
+}
+
+.card img {
+  width: 100%;
+  display: block;
+  border-radius: 6px;
+}
+
+.caption {
+  font-size: 13px;
+  margin: 8px 2px 2px;
+}
+
+.featured {
+  border-color: #38bdf8;
+}
+
+.signup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+input {
+  padding: 6px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+}
+
+button {
+  padding: 6px 12px;
+  background: #0f172a;
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+}
+
+footer {
+  padding: 12px 20px;
+  font-size: 12px;
+  color: #64748b;
+  border-top: 1px solid #e5e7eb;
+}`;
+
+const SVGS = {
+  'dashboard.svg': `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'><rect width='160' height='100' fill='#e0f2fe'/><rect x='18' y='62' width='16' height='24' rx='2' fill='#7dd3fc'/><rect x='42' y='46' width='16' height='40' rx='2' fill='#38bdf8'/><rect x='66' y='32' width='16' height='54' rx='2' fill='#0ea5e9'/><rect x='90' y='52' width='16' height='34' rx='2' fill='#38bdf8'/><rect x='114' y='20' width='16' height='66' rx='2' fill='#0369a1'/></svg>`,
+  'landing.svg': `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'><rect width='160' height='100' fill='#fef3c7'/><rect x='16' y='18' width='78' height='10' rx='3' fill='#92400e'/><rect x='16' y='34' width='100' height='6' rx='3' fill='#d97706'/><rect x='16' y='45' width='84' height='6' rx='3' fill='#d97706'/><rect x='16' y='62' width='42' height='14' rx='7' fill='#b45309'/><circle cx='130' cy='68' r='17' fill='#fbbf24'/></svg>`,
+  'mobile.svg': `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 100'><rect width='160' height='100' fill='#ede9fe'/><rect x='62' y='10' width='36' height='80' rx='7' fill='#4c1d95'/><rect x='66' y='18' width='28' height='58' rx='2' fill='#c4b5fd'/><rect x='70' y='24' width='20' height='6' rx='2' fill='#7c3aed'/><rect x='70' y='35' width='20' height='16' rx='2' fill='#a78bfa'/><rect x='70' y='56' width='20' height='4' rx='2' fill='#7c3aed'/></svg>`
+};
+const IMG = {}, IMG_BACK = {};
+for (const [k, v] of Object.entries(SVGS)) { const uri = 'data:image/svg+xml,' + encodeURIComponent(v); IMG[k] = uri; IMG_BACK[uri] = k; }
+
+/* ---------- library ---------- */
+const LIB = [
+  { title: 'What is it?', blurb: 'Pick elements by what they are.', items: [
+    ['*', 'Everything. Every single element.'],
+    ['p', 'By tag: every paragraph.'],
+    ['.card', 'By class: anything with class="card".'],
+    ['#logo', 'By id: the one element with id="logo".'],
+    ['[href]', 'By attribute: anything that has an href.'],
+    ['a[href^="https"]', 'Links whose href starts with https.'],
+    ['input[type="email"]', 'Inputs whose type is exactly email.'],
+  ]},
+  { title: 'Where is it?', blurb: 'Combinators describe family relationships.', items: [
+    ['.gallery img', 'A space means inside, at any depth.'],
+    ['.card > img', '> means direct child only.'],
+    ['main > img', 'The images are not direct children of <main>. Look at the tree.', true],
+    ['h2 + .card', '+ means the very next sibling.'],
+    ['h2 ~ .card', '~ means any later sibling.'],
+    ['nav a', 'Links somewhere inside the nav.'],
+  ]},
+  { title: 'Joining', blurb: 'No space means AND. A comma means OR.', items: [
+    ['.card.featured', 'No space: one element with both classes.'],
+    ['.card .featured', 'With a space it means a .featured inside a .card.', true],
+    ['p.caption', 'A <p> that also has the class caption.'],
+    ['h1, h2', 'A comma lists two selectors for one rule.'],
+  ]},
+  { title: 'Which one?', blurb: 'Pseudo-classes filter by position or state.', items: [
+    ['nav a:first-child', 'The first child of its parent.'],
+    ['nav a:last-child', 'The last child of its parent.'],
+    ['.card:first-child', 'The first child of .gallery is the <h2>, so no card matches.', true],
+    ['.card:first-of-type', 'The first <div> among its siblings.'],
+    ['.card:nth-child(2)', ':nth-child counts the <h2> too. Position 2 is the first card.', true],
+    ['nav a:nth-child(odd)', 'Positions 1, 3, 5, and so on.'],
+    ['.card:not(.featured)', 'Every card except the featured one.'],
+    ['div:has(> img)', 'Divs that directly contain an image.'],
+    ['input:required', 'Form fields marked required.'],
+    ['nav a:hover', 'Only while the mouse is over it. Hover the nav.'],
+    ['.caption::first-letter', 'A pseudo-element styles part of an element.'],
+  ]},
+];
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const K = (kind, text) => `<b class="k-${kind}">${esc(text)}</b>`;
+const trunc = (s, n) => s.length > n ? s.slice(0, n - 1) + '…' : s;
+const ordinal = n => { const s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
+const joinAnd = a => a.length <= 1 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+const VOID = new Set(['area','base','br','col','embed','hr','img','input','link','meta','source','track','wbr']);
+const INHERITED = new Set(['color','font','font-family','font-size','font-style','font-weight','font-variant','font-stretch','line-height','letter-spacing','word-spacing','text-align','text-indent','text-transform','text-shadow','white-space','visibility','cursor','list-style','list-style-type','list-style-position','list-style-image','direction','quotes','caption-side','border-collapse','border-spacing','tab-size','hyphens','word-break','overflow-wrap','color-scheme','text-rendering']);
+const STATE = {
+  hover:'while the mouse is over it', focus:'while it has keyboard focus', 'focus-visible':'while it shows a visible focus ring',
+  'focus-within':'while it, or something inside it, has focus', active:'while it is being clicked',
+  visited:'that the visitor has already opened', link:'that is a link not yet visited', checked:'that is checked',
+  disabled:'that is disabled', enabled:'that is enabled', required:'that is required', optional:'that is optional',
+  valid:'whose value is valid', invalid:'whose value is invalid', 'placeholder-shown':'that is showing its placeholder',
+  target:'that the URL’s #hash points to', root:'that is the root of the document', empty:'with nothing inside it, not even text'
+};
+const INTERACTIVE = /:(hover|focus|focus-within|focus-visible|active|checked|placeholder-shown)\b/;
+const PE_RE = /::?(before|after|first-letter|first-line|placeholder|selection|marker|backdrop)\b/gi;
+
+/* ---------- selector parser (for explanations; the browser does the real matching) ---------- */
+const IDENT = /[A-Za-z0-9_\- -￿\\]/;
+function readIdent(s, i) { let j = i; while (j < s.length && IDENT.test(s[j])) j++; return [s.slice(i, j), j]; }
+function readBalanced(s, i) {
+  let depth = 0, q = null;
+  for (let j = i; j < s.length; j++) {
+    const c = s[j];
+    if (q) { if (c === q) q = null; continue; }
+    if (c === '"' || c === "'") { q = c; continue; }
+    if (c === '(') depth++;
+    else if (c === ')') { depth--; if (depth === 0) return [s.slice(i + 1, j), j + 1]; }
+  }
+  throw new Error('A “(” is missing its closing “)”.');
+}
+function tokenize(src) {
+  const s = src.trim(), t = []; let i = 0;
+  const last = () => t[t.length - 1];
+  const dropDesc = () => { if (last() && last().k === 'comb' && last().v === ' ') t.pop(); };
+  while (i < s.length) {
+    const c = s[i];
+    if (/\s/.test(c)) {
+      let j = i; while (j < s.length && /\s/.test(s[j])) j++;
+      const n = s[j];
+      if (n && !'>+~,)'.includes(n) && last() && last().k !== 'comb' && last().k !== 'comma') t.push({ k:'comb', v:' ', raw:' ' });
+      i = j; continue;
+    }
+    if ('>+~'.includes(c)) { dropDesc(); t.push({ k:'comb', v:c, raw:c }); i++; continue; }
+    if (c === ',') { dropDesc(); t.push({ k:'comma', raw:',' }); i++; continue; }
+    if (c === '*') { t.push({ k:'universal', v:'*', raw:'*' }); i++; continue; }
+    if (c === '#' || c === '.') {
+      const [name, j] = readIdent(s, i + 1);
+      if (!name) throw new Error(`“${c}” needs a name right after it.`);
+      t.push({ k: c === '#' ? 'id' : 'class', v:name, raw:c + name }); i = j; continue;
+    }
+    if (c === '[') {
+      let j = i + 1, q = null;
+      for (; j < s.length; j++) { const d = s[j]; if (q) { if (d === q) q = null; continue; } if (d === '"' || d === "'") { q = d; continue; } if (d === ']') break; }
+      if (j >= s.length) throw new Error('A “[” is missing its closing “]”.');
+      const inner = s.slice(i + 1, j);
+      const m = inner.match(/^\s*([\w-]+)\s*(?:([~|^$*]?=)\s*(?:"([^"]*)"|'([^']*)'|([^\s"']+))\s*([iIsS])?)?\s*$/);
+      if (!m) throw new Error('This attribute selector doesn’t look right.');
+      t.push({ k:'attr', name:m[1], op:m[2] || null, val: m[3] ?? m[4] ?? m[5] ?? null, raw:s.slice(i, j + 1) });
+      i = j + 1; continue;
+    }
+    if (c === ':') {
+      const dbl = s[i + 1] === ':';
+      const [name, j] = readIdent(s, i + (dbl ? 2 : 1));
+      if (!name) throw new Error('“:” needs a name right after it.');
+      let arg = null, end = j;
+      if (s[j] === '(') { const r = readBalanced(s, j); arg = r[0]; end = r[1]; }
+      const v = name.toLowerCase();
+      const isPE = dbl || ['before','after','first-letter','first-line'].includes(v);
+      t.push({ k: isPE ? 'pe' : 'pseudo', v, arg, raw:s.slice(i, end) }); i = end; continue;
+    }
+    if (/[A-Za-z_\-]/.test(c)) { const [n, j] = readIdent(s, i); t.push({ k:'type', v:n.toLowerCase(), raw:n }); i = j; continue; }
+    throw new Error(`“${c}” isn’t something a selector can contain here.`);
+  }
+  return t;
+}
+function parseList(src, { relative = false } = {}) {
+  const toks = tokenize(src), out = [];
+  let cx = { compounds:[], combs:[], lead:null }, comp = [];
+  const close = () => { if (!comp.length) throw new Error('A combinator needs a selector on both sides.'); cx.compounds.push(comp); comp = []; };
+  for (const tk of toks) {
+    if (tk.k === 'comma') { close(); out.push(cx); cx = { compounds:[], combs:[], lead:null }; continue; }
+    if (tk.k === 'comb') {
+      if (relative && !comp.length && !cx.compounds.length && cx.lead === null) { cx.lead = tk.v; continue; }
+      close(); cx.combs.push(tk.v); continue;
+    }
+    comp.push(tk);
+  }
+  close(); out.push(cx);
+  return out;
+}
+
+/* ---------- specificity ---------- */
+const cmpSpec = (p, q) => p[0] - q[0] || p[1] - q[1] || p[2] - q[2];
+const maxSpec = arr => arr.reduce((m, x) => cmpSpec(x, m) > 0 ? x : m, [0,0,0]);
+function specSimple(s) {
+  switch (s.k) {
+    case 'id': return [1,0,0];
+    case 'class': case 'attr': return [0,1,0];
+    case 'type': case 'pe': return [0,0,1];
+    case 'universal': return [0,0,0];
+    case 'pseudo':
+      if (s.v === 'where') return [0,0,0];
+      if (['not','is','has'].includes(s.v) && s.arg != null) {
+        try { return maxSpec(parseList(s.arg, { relative: s.v === 'has' }).map(specCx)); } catch { return [0,1,0]; }
+      }
+      return [0,1,0];
+  }
+  return [0,0,0];
+}
+function specCx(cx) { const r = [0,0,0]; for (const comp of cx.compounds) for (const s of comp) { const x = specSimple(s); r[0]+=x[0]; r[1]+=x[1]; r[2]+=x[2]; } return r; }
+function specOf(sel) { try { return maxSpec(parseList(sel).map(specCx)); } catch { return [0,0,0]; } }
+
+/* ---------- plain-English explanations ---------- */
+const article = noun => /^[aeio]/i.test(noun) ? 'an' : 'a';
+function nthInfo(arg) {
+  const a0 = String(arg || '').trim().toLowerCase().split(/\s+of\s+/)[0].replace(/\s+/g, '');
+  if (a0 === 'odd') return { a:2, b:1 };
+  if (a0 === 'even') return { a:2, b:0 };
+  if (/^[+-]?\d+$/.test(a0)) return { a:0, b:parseInt(a0, 10) };
+  const m = a0.match(/^([+-]?\d*)n([+-]\d+)?$/);
+  if (!m) return null;
+  const a = m[1] === '' || m[1] === '+' ? 1 : m[1] === '-' ? -1 : parseInt(m[1], 10);
+  return { a, b: m[2] ? parseInt(m[2], 10) : 0 };
+}
+function nthClause(arg, what, suffix) {
+  const f = nthInfo(arg);
+  if (!f) return `that matches the formula ${K('pseudo', arg)}`;
+  if (f.a === 0) return `that is the ${ordinal(f.b)} ${what}${suffix}`;
+  const pos = [];
+  for (let n = 0; n < 60 && pos.length < 4; n++) { const p = f.a * n + f.b; if (p >= 1 && !pos.includes(p)) pos.push(p); }
+  pos.sort((x, y) => x - y);
+  const list = pos.map(ordinal).join(', ') + (f.a > 0 ? ', …' : '');
+  const raw = String(arg).trim().toLowerCase();
+  if (raw === 'odd') return `that is an odd-numbered ${what}${suffix} (${list})`;
+  if (raw === 'even') return `that is an even-numbered ${what}${suffix} (${list})`;
+  return `that is in position ${list} as a ${what}${suffix}`;
+}
+function attrPhrase(s) {
+  const A = K('attr', s.name), V = s.val != null ? K('attr', `“${s.val}”`) : '';
+  switch (s.op) {
+    case null: return `that has ${article(s.name)} ${A} attribute`;
+    case '=': return `whose ${A} is exactly ${V}`;
+    case '^=': return `whose ${A} starts with ${V}`;
+    case '$=': return `whose ${A} ends with ${V}`;
+    case '*=': return `whose ${A} contains ${V}`;
+    case '~=': return `whose ${A} includes the word ${V}`;
+    case '|=': return `whose ${A} is ${V} or starts with ${K('attr', `“${s.val}-”`)}`;
+  }
+  return `matching ${K('attr', s.raw)}`;
+}
+function notPhrase(arg) {
+  try {
+    const list = parseList(arg);
+    if (list.length === 1 && list[0].compounds.length === 1) return `that is not ${NP(list[0].compounds[0], 'a')}`;
+  } catch {}
+  return `that does not match ${K('pseudo', arg)}`;
+}
+function hasPhrase(arg) {
+  try {
+    const list = parseList(arg, { relative:true });
+    return list.map(cx => {
+      const np = describeCx(cx, 'a');
+      if (cx.lead === '>') return `that has ${np} as a direct child`;
+      if (cx.lead === '+') return `that is followed right away by ${np}`;
+      if (cx.lead === '~') return `that has ${np} somewhere after it`;
+      return `that contains ${np}`;
+    }).join(' or ');
+  } catch { return `that contains something matching ${K('pseudo', arg)}`; }
+}
+function pseudoPhrase(s, type) {
+  const T = type ? K('type', `<${type}>`) : 'element of its tag';
+  switch (s.v) {
+    case 'first-child': return 'that is the first child of its parent';
+    case 'last-child': return 'that is the last child of its parent';
+    case 'only-child': return 'that is the only child of its parent';
+    case 'first-of-type': return `that is the first ${T} among its siblings`;
+    case 'last-of-type': return `that is the last ${T} among its siblings`;
+    case 'only-of-type': return `that is the only ${T} among its siblings`;
+    case 'nth-child': return nthClause(s.arg, 'child', ' of its parent');
+    case 'nth-last-child': return nthClause(s.arg, 'child', ' of its parent, counting from the end');
+    case 'nth-of-type': return nthClause(s.arg, T, ' among its siblings');
+    case 'nth-last-of-type': return nthClause(s.arg, T, ' among its siblings, counting from the end');
+    case 'not': return notPhrase(s.arg);
+    case 'is': case 'where': return `that matches any of ${K('pseudo', s.arg || '')}`;
+    case 'has': return hasPhrase(s.arg);
+  }
+  return STATE[s.v] || `that matches ${K('pseudo', ':' + s.v)}`;
+}
+const PE = {
+  before:'the generated content placed before the content of', after:'the generated content placed after the content of',
+  'first-letter':'the first letter of', 'first-line':'the first line of', placeholder:'the placeholder text of',
+  selection:'the text the visitor highlights in', marker:'the bullet or number of', backdrop:'the backdrop behind'
+};
+function NP(comp, det) {
+  let type = null, pe = null; const ids = [], classes = [], quals = [];
+  for (const s of comp) {
+    if (s.k === 'type') type = s.v;
+    else if (s.k === 'id') ids.push(`with the id ${K('id', `“${s.v}”`)}`);
+    else if (s.k === 'class') classes.push(s.v);
+    else if (s.k === 'attr') quals.push(attrPhrase(s));
+    else if (s.k === 'pseudo') quals.push(pseudoPhrase(s, type));
+    else if (s.k === 'pe') pe = s.v;
+  }
+  const cls = classes.length === 0 ? [] : classes.length === 1
+    ? [`with the class ${K('class', `“${classes[0]}”`)}`]
+    : [`with both classes ${joinAnd(classes.map(c => K('class', `“${c}”`)))}`];
+  const all = [...ids, ...cls, ...quals];
+  const noun = type ? K('type', `<${type}>`) : 'element';
+  const d = det === 'every' ? 'every' : article(type || 'element');
+  let text = `${d} ${noun}${all.length ? ' ' + joinAnd(all) : ''}`;
+  if (pe) text = `${PE[pe] || `the ${K('pseudo', '::' + pe)} part of`} ${text}`;
+  return text;
+}
+const REL = {
+  ' ': ['that is somewhere inside', 'is somewhere inside'],
+  '>': ['that is a direct child of', 'is a direct child of'],
+  '+': ['that is the very next sibling after', 'is the very next sibling after'],
+  '~': ['that is a later sibling of', 'is a later sibling of'],
+};
+function describeCx(cx, det) {
+  const n = cx.compounds.length;
+  let out = NP(cx.compounds[n - 1], det);
+  const targetHasQuals = cx.compounds[n - 1].some(s => s.k !== 'type' && s.k !== 'universal');
+  for (let i = n - 2; i >= 0; i--) {
+    const rel = REL[cx.combs[i]];
+    if (i === n - 2) out += (targetHasQuals ? ', ' : ' ') + rel[0] + ' ' + NP(cx.compounds[i], 'a');
+    else out += ', which ' + rel[1] + ' ' + NP(cx.compounds[i], 'a');
+  }
+  return out;
+}
+
+/* ---------- anatomy ---------- */
+const KIND = { type:'type', universal:'type', class:'class', id:'id', attr:'attr', pseudo:'pseudo', pe:'pseudo' };
+const CHIP_LABEL = t => t.k === 'type' ? 'tag' : t.k === 'universal' ? 'any' : t.k === 'attr' ? 'attribute'
+  : t.k === 'pe' ? 'pseudo-element' : t.k === 'pseudo' ? (STATE[t.v] && INTERACTIVE.test(':' + t.v) ? 'state' : 'pseudo-class') : t.k;
+const COMB_NAME = { ' ':'descendant', '>':'child', '+':'next sibling', '~':'later sibling' };
+const ROLE = { ' ':'ancestor', '>':'parent', '+':'previous sibling', '~':'earlier sibling' };
+function colorize(sel) {
+  try {
+    return tokenize(sel).map(t => {
+      if (t.k === 'comb') return t.v === ' ' ? ' ' : `<span class="k-comb"> ${esc(t.v)} </span>`;
+      if (t.k === 'comma') return '<span class="k-comb">, </span>';
+      return `<span class="k-${KIND[t.k]}">${esc(t.raw)}</span>`;
+    }).join('');
+  } catch { return esc(sel); }
+}
+function anatomyHTML(list) {
+  return list.map(cx => {
+    const n = cx.compounds.length, parts = [];
+    cx.compounds.forEach((comp, i) => {
+      const role = i === n - 1 ? 'target' : ROLE[cx.combs[i]];
+      const chips = comp.map(t => `<span class="chip k-${KIND[t.k]}"><code>${esc(t.raw)}</code><small>${CHIP_LABEL(t)}</small></span>`).join('');
+      parts.push(`<span class="cmp${i === n - 1 ? ' is-target' : ''}"><span class="chips">${chips}</span><span class="role">${role}</span></span>`);
+      if (i < n - 1) { const c = cx.combs[i]; parts.push(`<span class="comb"><code>${c === ' ' ? '␣' : esc(c)}</code><small>${COMB_NAME[c]}</small></span>`); }
+    });
+    return parts.join('');
+  }).join('<span class="or">OR</span>');
+}
+
+/* ---------- state ---------- */
+const state = { html: SAMPLE_HTML, css: SAMPLE_CSS, tab: 'html' };
+let els = [], rowOf = new Map(), matches = [], selected = null, hoverEl = null;
+const host = $('host'), wrap = $('wrap'), overlay = $('overlay'), treeEl = $('tree'), selInput = $('sel');
+const shadow = host.attachShadow({ mode:'open' });
+const baseSheet = new CSSStyleSheet();
+baseSheet.replaceSync(':host{display:block;background:#ffffff;color:#1e293b;font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100%}');
+const userSheet = new CSSStyleSheet();
+
+/* ---------- render the sample page ---------- */
+function pathOf(el) { const p = []; while (el && el.parentNode) { const sibs = [...(el.parentElement ? el.parentElement.children : shadow.children)]; p.unshift(sibs.indexOf(el)); el = el.parentElement; } return p; }
+function fromPath(p) { let list = [...shadow.children], el = null; for (const i of p) { el = list[i]; if (!el) return null; list = [...el.children]; } return el; }
+
+function render() {
+  const keep = selected && selected.isConnected ? pathOf(selected) : null;
+  try { userSheet.replaceSync(state.css); } catch { userSheet.replaceSync(''); }
+  shadow.adoptedStyleSheets = [baseSheet, userSheet];
+  const html = state.html.replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/src="([^"]+)"/g, (m, n) => IMG[n] ? `src="${IMG[n]}"` : m);
+  shadow.innerHTML = html;
+  shadow.querySelectorAll('*').forEach(e => [...e.attributes].forEach(a => { if (/^on/i.test(a.name)) e.removeAttribute(a.name); }));
+  shadow.querySelectorAll('img').forEach(img => img.addEventListener('load', drawOverlay));
+  els = [...shadow.querySelectorAll('*')];
+  selected = keep ? fromPath(keep) : null;
+  buildTree();
+  runSelector();
+  renderInspector();
+}
+
+/* ---------- tree ---------- */
+function openTag(el) {
+  const tag = el.tagName.toLowerCase();
+  let h = `<span class="p">&lt;</span><span class="k-type">${tag}</span>`;
+  for (const a of el.attributes) {
+    if (a.name === 'class') {
+      h += ` <span class="an">class</span><span class="p">="</span>${a.value.trim().split(/\s+/).map(c => `<span class="k-class">${esc(c)}</span>`).join(' ')}<span class="p">"</span>`;
+    } else if (a.name === 'id') {
+      h += ` <span class="an">id</span><span class="p">="</span><span class="k-id">${esc(a.value)}</span><span class="p">"</span>`;
+    } else {
+      const v = a.name === 'src' && IMG_BACK[a.value] ? IMG_BACK[a.value] : a.value;
+      h += ` <span class="an">${esc(a.name)}</span>${a.value !== '' || a.name !== 'required' ? `<span class="p">=</span><span class="av">"${esc(trunc(v, 28))}"</span>` : ''}`;
+    }
+  }
+  return h + '<span class="p">&gt;</span>';
+}
+const closeTag = tag => `<span class="p">&lt;/</span><span class="k-type">${tag}</span><span class="p">&gt;</span>`;
+function nodeFor(el) {
+  const node = document.createElement('div'); node.className = 'node';
+  const tag = el.tagName.toLowerCase(), hasKids = el.children.length > 0, isVoid = VOID.has(tag);
+  const row = document.createElement('div'); row.className = 'row';
+  const leafText = !hasKids && !isVoid ? `<span class="txt">${esc(trunc(el.textContent.trim().replace(/\s+/g, ' '), 30))}</span>${closeTag(tag)}` : '';
+  row.innerHTML = (hasKids ? '<button class="tw" type="button" aria-label="Collapse or expand">▾</button>' : '<span class="tw sp0"></span>')
+    + `<span class="code">${openTag(el)}${leafText}${hasKids ? `<span class="ell">…${closeTag(tag)}</span>` : ''}</span><span class="n"></span>`;
+  row._el = el; rowOf.set(el, row); node.appendChild(row);
+  if (hasKids) {
+    const kids = document.createElement('div'); kids.className = 'kids';
+    for (const c of el.childNodes) {
+      if (c.nodeType === 1) kids.appendChild(nodeFor(c));
+      else if (c.nodeType === 3 && c.textContent.trim()) {
+        const t = document.createElement('div'); t.className = 'row textrow';
+        t.innerHTML = `<span class="tw sp0"></span><span class="code txt">"${esc(trunc(c.textContent.trim().replace(/\s+/g, ' '), 36))}"</span>`;
+        kids.appendChild(t);
+      }
+    }
+    node.appendChild(kids);
+    const close = document.createElement('div'); close.className = 'row close';
+    close.innerHTML = `<span class="tw sp0"></span><span class="code">${closeTag(tag)}</span>`;
+    node.appendChild(close);
+  }
+  return node;
+}
+function buildTree() {
+  rowOf = new Map(); treeEl.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  for (const ch of shadow.children) frag.appendChild(nodeFor(ch));
+  treeEl.appendChild(frag);
+}
+treeEl.addEventListener('click', e => {
+  const tw = e.target.closest('.tw');
+  if (tw && tw.tagName === 'BUTTON') { tw.closest('.node').classList.toggle('collapsed'); return; }
+  const row = e.target.closest('.row'); if (row && row._el) select(row._el, false);
+});
+treeEl.addEventListener('mouseover', e => { const row = e.target.closest('.row'); setHover(row && row._el ? row._el : null); });
+treeEl.addEventListener('mouseleave', () => setHover(null));
+
+/* ---------- preview interaction ---------- */
+shadow.addEventListener('click', e => { e.preventDefault(); if (e.target instanceof Element) select(e.target, true); });
+shadow.addEventListener('submit', e => e.preventDefault());
+let raf = 0;
+const live = () => { if (INTERACTIVE.test(selInput.value)) { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => runSelector(true)); } };
+shadow.addEventListener('pointerover', e => { setHover(e.target instanceof Element ? e.target : null); live(); });
+shadow.addEventListener('pointerout', live);
+shadow.addEventListener('focusin', live);
+shadow.addEventListener('focusout', live);
+host.addEventListener('pointerleave', () => { setHover(null); live(); });
+
+function setHover(el) {
+  if (hoverEl === el) return;
+  if (hoverEl && rowOf.get(hoverEl)) rowOf.get(hoverEl).classList.remove('is-hov');
+  hoverEl = el;
+  if (el && rowOf.get(el)) rowOf.get(el).classList.add('is-hov');
+  drawOverlay();
+}
+function select(el, fromPreview) {
+  if (selected && rowOf.get(selected)) rowOf.get(selected).classList.remove('is-sel');
+  selected = el;
+  const row = rowOf.get(el);
+  if (row) {
+    row.classList.add('is-sel');
+    let n = row.parentElement.closest('.node');
+    while (n) { n.classList.remove('collapsed'); n = n.parentElement.closest('.node'); }
+    if (fromPreview) row.scrollIntoView({ block:'nearest' });
+  }
+  renderInspector(); drawOverlay();
+}
+
+/* ---------- overlay boxes ---------- */
+function boxFor(el) {
+  const r = el.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+  return { x: r.left - w.left + wrap.scrollLeft, y: r.top - w.top + wrap.scrollTop, w: r.width, h: r.height };
+}
+function drawOverlay() {
+  let h = '';
+  matches.forEach((el, i) => { const b = boxFor(el); if (!b.w && !b.h) return; h += `<div class="ov m" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;height:${b.h}px"><i>${i + 1}</i></div>`; });
+  if (hoverEl && hoverEl.isConnected) { const b = boxFor(hoverEl); h += `<div class="ov h" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;height:${b.h}px"></div>`; }
+  if (selected && selected.isConnected) { const b = boxFor(selected); h += `<div class="ov s" style="left:${b.x}px;top:${b.y}px;width:${b.w}px;height:${b.h}px"></div>`; }
+  overlay.innerHTML = h;
+}
+new ResizeObserver(() => drawOverlay()).observe(host);
+new ResizeObserver(() => drawOverlay()).observe(wrap);
+
+/* ---------- run the selector ---------- */
+function runSelector(quiet) {
+  const raw = selInput.value.trim();
+  let err = null, list = null, parseErr = null;
+  matches = [];
+  if (raw) {
+    try { document.createDocumentFragment().querySelector(raw); } catch { err = 'This isn’t a valid selector yet. Keep typing, or check for a missing bracket or quote.'; }
+    if (!err) { const hs = raw.replace(PE_RE, '').trim(); try { matches = [...shadow.querySelectorAll(hs || '*')]; } catch { matches = []; } }
+    try { list = parseList(raw); } catch (e) { parseErr = e.message; }
+  }
+  for (const [el, row] of rowOf) { row.classList.remove('is-match'); row.querySelector('.n').innerHTML = ''; }
+  matches.forEach((el, i) => {
+    const row = rowOf.get(el); if (!row) return;
+    row.classList.add('is-match'); row.querySelector('.n').innerHTML = `<span class="badge">${i + 1}</span>`;
+    if (!quiet) { let n = row.parentElement.closest('.node'); while (n) { n.classList.remove('collapsed'); n = n.parentElement.closest('.node'); } }
+  });
+  drawOverlay();
+  if (quiet) { updateCount(raw, err); return; }
+
+  updateCount(raw, err);
+  $('anatomy').innerHTML = !err && list ? anatomyHTML(list) : '';
+  const eng = $('english');
+  if (!raw) eng.innerHTML = '<span class="muted">Type a selector above, or pick one from the library.</span>';
+  else if (err) eng.innerHTML = `<span class="err">${esc(err)}</span>${parseErr ? ` <span class="muted">${esc(parseErr)}</span>` : ''}`;
+  else if (!list) eng.innerHTML = '<span class="muted">The browser understands this one, but there’s no plain-English version for it here.</span>';
+  else eng.innerHTML = 'Selects ' + list.map(cx => describeCx(cx, 'every')).join(', and also ') + '.';
+
+  const specs = $('specs');
+  if (!err && list) {
+    const parts = splitTop(raw);
+    specs.innerHTML = list.map((cx, i) => {
+      const s = specCx(cx);
+      return `<span class="spec">${list.length > 1 ? `<code class="lab">${colorize(parts[i] || '')}</code>` : ''}<span class="sp k-id"><b>${s[0]}</b><small>IDs</small></span><span class="sp k-class"><b>${s[1]}</b><small>classes</small></span><span class="sp k-type"><b>${s[2]}</b><small>tags</small></span></span>`;
+    }).join('');
+  } else specs.innerHTML = '<span class="muted small">–</span>';
+
+  $('notes').innerHTML = notesFor(raw, list, matches.length, err);
+  document.querySelectorAll('.item').forEach(b => b.classList.toggle('on', b.dataset.sel === raw));
+}
+function updateCount(raw, err) {
+  const c = $('count');
+  c.className = 'count' + (err ? ' bad' : matches.length ? '' : ' zero');
+  c.textContent = !raw ? '–' : err ? 'invalid' : `${matches.length} match${matches.length === 1 ? '' : 'es'}`;
+}
+function splitTop(s) {
+  const out = []; let depth = 0, buf = '', q = null;
+  for (const ch of s) {
+    if (q) { buf += ch; if (ch === q) q = null; continue; }
+    if (ch === '"' || ch === "'") q = ch;
+    if (ch === '(' || ch === '[') depth++;
+    if (ch === ')' || ch === ']') depth--;
+    if (ch === ',' && depth === 0) { out.push(buf.trim()); buf = ''; } else buf += ch;
+  }
+  if (buf.trim()) out.push(buf.trim());
+  return out;
+}
+function notesFor(raw, list, count, err) {
+  if (!raw || err) return '';
+  const hs = [];
+  if (/::?(before|after|first-letter|first-line|placeholder|selection|marker)\b/i.test(raw)) hs.push('A pseudo-element styles part of an element, not a whole element. The outlines show the elements that own that part.');
+  if (INTERACTIVE.test(raw)) hs.push('This one only matches during an interaction. Hover, click or tab inside the page to see it change.');
+  if (count === 0 && list) {
+    if (list.some(cx => cx.compounds.some(c => c.filter(s => ['type','class','id','attr'].includes(s.k)).length > 1)))
+      hs.push('No space between parts means they all have to be on the same element.');
+    if (list.some(cx => cx.combs.includes('>'))) hs.push('“>” only reaches direct children. Check the tree for who the real parent is, or use a space to reach any depth.');
+    if (list.some(cx => cx.combs.includes(' '))) hs.push('A space means “inside”. The part on the right has to be inside the part on the left.');
+    if (/:(first|last|only)-child|:nth-(last-)?child/.test(raw)) hs.push(':first-child and :nth-child count every sibling, whatever its tag. The -of-type versions only count siblings with the same tag.');
+    if (!hs.length) hs.push('Nothing on this page matches. Compare your selector with what the tree shows.');
+  }
+  return hs.map(h => `<span>${esc(h)}</span>`).join('');
+}
+selInput.addEventListener('input', () => runSelector());
+
+/* ---------- inspector ---------- */
+function labelHTML(el) {
+  let h = `<span class="k-type">${el.tagName.toLowerCase()}</span>`;
+  if (el.id) h += `<span class="k-id">#${esc(el.id)}</span>`;
+  for (const c of el.classList) h += `<span class="k-class">.${esc(c)}</span>`;
+  return h;
+}
+function parseDecls(style) {
+  const parts = []; let depth = 0, buf = '';
+  for (const ch of style.cssText) {
+    if (ch === '(') depth++; if (ch === ')') depth--;
+    if (ch === ';' && depth === 0) { parts.push(buf); buf = ''; } else buf += ch;
+  }
+  if (buf.trim()) parts.push(buf);
+  const out = [];
+  for (const p of parts) {
+    const i = p.indexOf(':'); if (i < 0) continue;
+    const prop = p.slice(0, i).trim().toLowerCase(); let val = p.slice(i + 1).trim(), imp = false;
+    if (/!\s*important$/i.test(val)) { imp = true; val = val.replace(/!\s*important$/i, '').trim(); }
+    if (prop) out.push({ prop, val, imp });
+  }
+  return out;
+}
+function styleRules() {
+  const out = [];
+  const walk = rules => {
+    for (const r of rules) {
+      if (r instanceof CSSStyleRule) out.push(r);
+      else if (r instanceof CSSMediaRule) { try { if (matchMedia(r.conditionText || r.media.mediaText).matches) walk(r.cssRules); } catch {} }
+    }
+  };
+  walk(userSheet.cssRules);
+  return out;
+}
+function matchedRules(el) {
+  const out = [];
+  styleRules().forEach((rule, order) => {
+    const parts = splitTop(rule.selectorText); let best = null;
+    for (const p of parts) { try { if (el.matches(p)) { const sp = specOf(p); if (!best || cmpSpec(sp, best.sp) > 0) best = { sel:p, sp }; } } catch {} }
+    if (best) {
+      const decls = parseDecls(rule.style).map(d => ({ ...d, sp:best.sp, order }));
+      out.push({ sel:best.sel, full:rule.selectorText, sp:best.sp, order, decls });
+    }
+  });
+  return out;
+}
+function winners(rules) {
+  const w = new Map();
+  for (const r of rules) for (const d of r.decls) {
+    const cur = w.get(d.prop);
+    if (!cur || (d.imp && !cur.imp) || (d.imp === cur.imp && (cmpSpec(d.sp, cur.sp) > 0 || (cmpSpec(d.sp, cur.sp) === 0 && d.order > cur.order)))) w.set(d.prop, d);
+  }
+  return w;
+}
+function ruleCard(r, decls, isActive) {
+  const from = r.full !== r.sel ? `<span class="from">from ${esc(r.full)}</span>` : '';
+  return `<div class="rule"><div class="rule-h"><code>${colorize(r.sel)} ${from}</code><span class="spb" title="Specificity: IDs, classes, tags">${r.sp.join(' · ')}</span></div><ul>${
+    decls.map(d => `<li class="${isActive(d) ? '' : 'lost'}"><span><span class="pp">${esc(d.prop)}</span>: <span class="pv">${esc(d.val)}${d.imp ? ' !important' : ''}</span>;</span>${INHERITED.has(d.prop) ? '<span class="inh" title="Children inherit this property">inherits</span>' : ''}</li>`).join('')
+  }</ul></div>`;
+}
+const relName = d => d === 1 ? 'parent' : d === 2 ? 'grandparent' : d === 3 ? 'great-grandparent' : 'ancestor';
+function rulesHTML(el) {
+  const own = matchedRules(el), win = winners(own);
+  let h = '<div class="rsec"><div class="rsec-h">Rules that select this element</div>';
+  h += own.length ? own.map(r => ruleCard(r, r.decls, d => win.get(d.prop) === d)).join('') : '<p class="small muted">No rule in the CSS selects this element directly.</p>';
+  h += '</div>';
+  const claimed = new Set(win.keys());
+  let depth = 0;
+  for (let a = el.parentElement; a; a = a.parentElement) {
+    depth++;
+    const rs = matchedRules(a); if (!rs.length) continue;
+    const w = winners(rs), stay = new Set();
+    let cards = '';
+    for (const r of rs) {
+      const inh = r.decls.filter(d => INHERITED.has(d.prop));
+      r.decls.forEach(d => { if (!INHERITED.has(d.prop)) stay.add(d.prop); });
+      if (inh.length) cards += ruleCard(r, inh, d => w.get(d.prop) === d && !claimed.has(d.prop));
+    }
+    h += `<div class="rsec"><div class="rsec-h">Inherited from the ${relName(depth)} <b>${labelHTML(a)}</b></div>${cards || '<p class="small muted">Nothing here inherits.</p>'}`;
+    if (stay.size) h += `<p class="stay">These stay on <b>${labelHTML(a)}</b> and never reach this element, because they don’t inherit: ${[...stay].map(p => `<code>${esc(p)}</code>`).join(' ')}</p>`;
+    h += '</div>';
+    for (const [p] of w) if (INHERITED.has(p)) claimed.add(p);
+  }
+  return h;
+}
+function boxHTML(el) {
+  const cs = getComputedStyle(el), n = p => Math.round(parseFloat(cs.getPropertyValue(p)) || 0), r = el.getBoundingClientRect();
+  const S = ['top','right','bottom','left'];
+  const m = S.map(s => n('margin-' + s)), b = S.map(s => n(`border-${s}-width`)), p = S.map(s => n('padding-' + s));
+  const cw = Math.max(0, Math.round(r.width - b[1] - b[3] - p[1] - p[3])), ch = Math.max(0, Math.round(r.height - b[0] - b[2] - p[0] - p[2]));
+  const v = x => x ? x : '–';
+  const layer = (cls, label, vals, inner) => `<div class="bm ${cls}"><span class="bm-l">${label}</span><span class="bt">${v(vals[0])}</span><span class="bl">${v(vals[3])}</span><div class="bc">${inner}</div><span class="br">${v(vals[1])}</span><span class="bb">${v(vals[2])}</span></div>`;
+  return `<div class="boxwrap"><p class="eyebrow">Box model</p>${layer('m','margin',m, layer('b','border',b, layer('pd','padding',p, `<div class="bm-content">${cw} × ${ch}</div>`)))}<p>display: ${esc(cs.display)}</p></div>`;
+}
+function renderInspector() {
+  const box = $('inspector');
+  if (!selected || !selected.isConnected) {
+    box.innerHTML = '<div class="pane-h"><span class="eyebrow">Inspector</span></div><p class="empty">Click any element in the tree or on the page to see its family, its box and the rules that style it.</p>';
+    return;
+  }
+  const el = selected, chain = [];
+  for (let a = el; a; a = a.parentElement) chain.unshift(a);
+  const roles = chain.map((_, i) => { const d = chain.length - 1 - i; return d === 0 ? 'this one' : relName(d); });
+  const crumbs = chain.map((a, i) => `${i ? '<span class="sep">›</span>' : ''}<button type="button" class="crumb${a === el ? ' cur' : ''}" data-i="${els.indexOf(a)}"><small>${roles[i]}</small>${labelHTML(a)}</button>`).join('');
+  const sibs = el.parentElement ? [...el.parentElement.children] : [...shadow.children];
+  const same = sibs.filter(s => s.tagName === el.tagName);
+  const tag = el.tagName.toLowerCase();
+  const facts = `<dl class="facts">
+    <div><dt>Parent</dt><dd>${el.parentElement ? labelHTML(el.parentElement) : '<span class="muted">the page</span>'}</dd></div>
+    <div><dt>Children</dt><dd>${el.children.length}</dd></div>
+    <div><dt>Position · :nth-child</dt><dd>${ordinal(sibs.indexOf(el) + 1)} of ${sibs.length}</dd></div>
+    <div><dt>Among &lt;${tag}&gt; · :nth-of-type</dt><dd>${ordinal(same.indexOf(el) + 1)} of ${same.length}</dd></div>
+  </dl>`;
+  box.innerHTML = `<div class="pane-h"><span class="eyebrow">Inspector</span><code>${labelHTML(el)}</code></div>
+    <div class="insp-body">
+      <div><p class="eyebrow" style="margin-bottom:6px">Family line</p><div class="family">${crumbs}</div></div>
+      ${facts}
+      <div class="insp-grid">${boxHTML(el)}<div>${rulesHTML(el)}</div></div>
+    </div>`;
+}
+$('inspector').addEventListener('click', e => { const c = e.target.closest('.crumb'); if (c && els[+c.dataset.i]) select(els[+c.dataset.i], true); });
+
+/* ---------- library ---------- */
+function buildLib() {
+  let h = '';
+  for (const fam of LIB) {
+    h += `<div class="fam"><h2>${fam.title}</h2><p>${fam.blurb}</p><div class="items">`;
+    for (const [sel, note, trap] of fam.items) {
+      h += `<button type="button" class="item" data-sel="${esc(sel)}"><code>${colorize(sel)}</code><span>${trap ? '<i class="trap">trap</i>' : ''}${esc(note)}</span></button>`;
+    }
+    h += '</div></div>';
+  }
+  h += `<div class="links"><p class="eyebrow">Practice and reference</p>
+    <a href="https://flukeout.github.io/" target="_blank" rel="noopener">CSS Diner: 32 selector levels</a>
+    <a href="https://fffuel.co/css-selectors/" target="_blank" rel="noopener">CSS Selectors: A Visual Guide</a>
+    <a href="https://kittygiraudel.com/projects/selectors-explained" target="_blank" rel="noopener">Selectors Explained</a>
+    <a href="https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Styling_basics/Basic_selectors" target="_blank" rel="noopener">MDN: Basic selectors</a></div>`;
+  $('lib').innerHTML = h;
+}
+$('lib').addEventListener('click', e => {
+  const b = e.target.closest('.item'); if (!b) return;
+  selInput.value = b.dataset.sel; runSelector();
+  if (matches[0]) select(matches[0], true);
+});
+
+/* ---------- editor ---------- */
+const code = $('code');
+function showTab(t) {
+  state.tab = t; code.value = state[t];
+  $('tab-html').setAttribute('aria-selected', t === 'html'); $('tab-css').setAttribute('aria-selected', t === 'css');
+}
+document.querySelector('.tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) showTab(b.dataset.tab); });
+let deb = 0;
+code.addEventListener('input', () => { state[state.tab] = code.value; clearTimeout(deb); deb = setTimeout(render, 250); });
+code.addEventListener('keydown', e => {
+  if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); const s = code.selectionStart; code.setRangeText('  ', s, code.selectionEnd, 'end'); code.dispatchEvent(new Event('input')); }
+});
+$('reset').addEventListener('click', () => { state.html = SAMPLE_HTML; state.css = SAMPLE_CSS; showTab(state.tab); render(); });
+
+/* ---------- boot ---------- */
+buildLib();
+showTab('html');
+render();
+if (matches[0]) select(matches[0], false);
+})();
+</script>
+
+</body></html>
